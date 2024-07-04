@@ -1,0 +1,200 @@
+{
+  "basics": {
+    "name": "Johan Jafet Del Valle Santiago",
+    "label": "Frontend Developer con dos año de experiencia en ReactJS & Creador de Contenido de videojuegos",
+    "image": "/me.webp",
+    "email": "johanjafet4@gmail.com",
+    "phone": "+52 7831390096",
+    "url": "https://blogdelsack.vercel.app/",
+    "summary": "+2 años de experiencia como Desarrollador Web. Actualmente estoy en busca de nuevos retos como desarrollador. Vivo en Tuxpan, Veracruz.",
+    "location": {
+      "address": "Galeana #83",
+      "postalCode": "92820",
+      "city": "Veracruz de Ignacio de la Llave",
+      "countryCode": "ES",
+      "region": "México"
+    },
+    "profiles": [
+      {
+        "network": "LinkedIn",
+        "username": "Johan Jafet Del Valle Santiago",
+        "url": "https://www.linkedin.com/in/johan-jafet-del-valle-santiago-3257a62a1"
+      },
+      {
+        "network": "X",
+        "username": "SackAnomalo",
+        "url": "https://x.com/SackAnomalo"
+      },
+      {
+        "network": "GitHub",
+        "username": "DarkSack",
+        "url": "https://github.com/DarkSack"
+      }
+    ]
+  },
+  "work": [
+    {
+      "name": "DonSack",
+      "position": "Creador de contenido de videojuegos",
+      "url": "https://twitch.tv/imjustsack",
+      "startDate": "2022-01-01",
+      "endDate": null,
+      "summary": "Streamer de videojuegos.",
+      "highlights": ["Streamer"]
+    },
+    {
+      "name": "Inclan Interactive",
+      "position": "Desarrollador frontend",
+      "url": "https://www.inclaninteractive.com/",
+      "startDate": "2023-01-01",
+      "endDate": "2024-01-01",
+      "summary": "Desarrollé vistas web responsivas en base a diseños proporcionados en Figma, asegurando la calidad y la responsividad de estas.",
+      "highlights": ["Frontend developer"]
+    },
+    {
+      "name": "Innmobiliaria René",
+      "position": "Atención al cliente",
+      "url": "https://acortar.link/gLciP8",
+      "startDate": "2020-01-01",
+      "endDate": "2022-03-01",
+      "summary": "Me encargué de atender clientes potenciales, así como de la contabilidad de la empresa, el registro de ingresos y salidas de capital.",
+      "highlights": ["Worker"]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Instituto Tecnologico Superior de Alamo Temapache",
+      "url": "https://tecalamo.edu.mx/",
+      "area": "Ingeniero en Tecnologías de la Información y Comunicaciones",
+      "studyType": "University",
+      "startDate": "2019-07-15",
+      "endDate": "2024-01-01",
+      "score": "93.0",
+      "courses": ["Desarrollo de aplicaciones moviles"]
+    }
+  ],
+  "awards": [],
+  "certificates": [],
+  "publications": [],
+  "skills": [
+    {
+      "name": "HTML",
+      "level": "Mid",
+      "keywords": ["Desarrollo Web", "Frontend"]
+    },
+    {
+      "name": "CSS",
+      "level": "Mid",
+      "keywords": ["Desarrollo Web", "Frontend", "Diseño Responsive"]
+    },
+    {
+      "name": "JavaScript",
+      "level": "Mid",
+      "keywords": ["Desarrollo Web", "Frontend", "Backend", "Fullstack"]
+    },
+    {
+      "name": "Tailwind",
+      "level": "Mid",
+      "keywords": [
+        "Desarrollo Web",
+        "Frontend",
+        "CSS Framework",
+        "Diseño Responsive"
+      ]
+    },
+    {
+      "name": "TypeScript",
+      "level": "Basic",
+      "keywords": [
+        "Desarrollo Web",
+        "Frontend",
+        "Backend",
+        "JavaScript Superset"
+      ]
+    },
+    {
+      "name": "Node",
+      "level": "Mid",
+      "keywords": ["Desarrollo Web", "Backend", "JavaScript", "Servidor"]
+    },
+    {
+      "name": "MySQL",
+      "level": "Basic",
+      "keywords": [
+        "Bases de Datos",
+        "SQL",
+        "Almacenamiento de Datos",
+        "Backend"
+      ]
+    },
+    {
+      "name": "Git",
+      "level": "Mid",
+      "keywords": ["Control de Versiones", "Colaboración", "Código Fuente"]
+    },
+    {
+      "name": "GitHub",
+      "level": "Mid",
+      "keywords": [
+        "Control de Versiones",
+        "Colaboración",
+        "Código Fuente",
+        "Git"
+      ]
+    },
+    {
+      "name": "Next.js",
+      "level": "Semi-Mid",
+      "keywords": [
+        "Desarrollo Web",
+        "Frontend",
+        "React Framework",
+        "SSR",
+        "Static Generation"
+      ]
+    },
+    {
+      "name": "React",
+      "level": "Mid",
+      "keywords": ["Desarrollo Web", "Frontend", "JavaScript Library", "UI"]
+    }
+  ],
+  "languages": [
+    {
+      "language": "Spanish",
+      "fluency": "Native speaker"
+    },
+    {
+      "language": "English",
+      "fluency": "Mid"
+    }
+  ],
+  "interests": [
+    {
+      "name": "Videogames",
+      "keywords": ["Shooters", "Streaming"]
+    }
+  ],
+  "references": [
+    {
+      "name": "María Del Rosario Torres Muñoz",
+      "reference": "rosario@inclancommunications.com"
+    }
+  ],
+  "projects": [
+    {
+      "name": "blogdelsack",
+      "isActive": true,
+      "description": "Un blog donde doy a conocer mi carrera como streamer.",
+      "highlights": ["Streaming", "En desarrollo"],
+      "url": "https://blogdelsack.vercel.app/"
+    },
+    {
+      "name": "SackitoInventory",
+      "isActive": true,
+      "description": "Sistema de compras en linea, tanto Frontend como backend",
+      "highlights": ["Inventory", "En desarrollo", "JavaScript & Nextjs"],
+      "url": "https://sackitoinventoryfrontend.vercel.app/"
+    }
+  ]
+}
