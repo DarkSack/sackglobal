@@ -34,15 +34,6 @@
   },
   "work": [
     {
-      "name": "DonSack",
-      "position": "Video game content creator",
-      "url": "https://twitch.tv/imjustsack",
-      "startDate": "2022-01-01",
-      "endDate": null,
-      "summary": "Video game streamer.",
-      "highlights": ["Streamer"]
-    },
-    {
       "name": "Inclan Interactive",
       "position": "Frontend Developer",
       "url": "https://www.inclaninteractive.com/",
