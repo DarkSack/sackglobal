@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Search,
   Loader2,
@@ -22,10 +22,15 @@ import {
 } from "@/api/repoInteractions";
 import RepoDetailModal from "@/pages/RepoDetailModal";
 import { cn, formatDate } from "@/lib/utils";
+import type {
+  GitHubRepo,
+  MyReactionsMap,
+  RepoSummaryMap,
+} from "@/types";
 
-const REACTIONS = ["❤️", "👍", "🚀", "🔥", "👀"];
+const REACTIONS = ["❤️", "👍", "🚀", "🔥", "👀"] as const;
 
-const LANG_COLORS = {
+const LANG_COLORS: Record<string, string> = {
   JavaScript: "#f1e05a",
   TypeScript: "#3178c6",
   Java: "#b07219",
@@ -41,16 +46,16 @@ export default function Portfolio() {
   const { user, isLogged } = useAuth();
   const currentUserId = user?.id || null;
 
-  const [repos, setRepos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [search, setSearch] = useState("");
-  const [langFilter, setLangFilter] = useState("all");
+  const [repos, setRepos] = useState<GitHubRepo[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState<string>("");
+  const [langFilter, setLangFilter] = useState<string>("all");
 
-  const [interactions, setInteractions] = useState({});
-  const [myReactions, setMyReactions] = useState({});
+  const [interactions, setInteractions] = useState<RepoSummaryMap>({});
+  const [myReactions, setMyReactions] = useState<MyReactionsMap>({});
 
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState<GitHubRepo | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,7 +64,7 @@ export default function Portfolio() {
         const data = await fetchRepos();
         if (!cancelled) setRepos(data);
       } catch (e) {
-        if (!cancelled) setError(e.message);
+        if (!cancelled) setError((e as Error).message);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -69,9 +74,9 @@ export default function Portfolio() {
     };
   }, []);
 
-  const repoIds = useMemo(() => repos.map((r) => r.id), [repos]);
+  const repoIds = useMemo<number[]>(() => repos.map((r) => r.id), [repos]);
 
-  const refresh = async () => {
+  const refresh = async (): Promise<void> => {
     if (!repoIds.length) return;
     const summary = await fetchInteractionsForRepos(repoIds);
     setInteractions(summary);
@@ -83,15 +88,15 @@ export default function Portfolio() {
   };
 
   useEffect(() => {
-    refresh();
+    void refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [repoIds.join(","), currentUserId]);
 
-  const languages = Array.from(
-    new Set(repos.map((r) => r.language).filter(Boolean))
+  const languages: string[] = Array.from(
+    new Set(repos.map((r) => r.language).filter((v): v is string => Boolean(v)))
   ).sort();
 
-  const filtered = repos.filter((r) => {
+  const filtered: GitHubRepo[] = repos.filter((r) => {
     const matchesLang = langFilter === "all" || r.language === langFilter;
     const q = search.trim().toLowerCase();
     const matchesSearch =
@@ -101,9 +106,13 @@ export default function Portfolio() {
     return matchesLang && matchesSearch;
   });
 
-  const handleReact = async (repo, emoji, e) => {
+  const handleReact = async (
+    repo: GitHubRepo,
+    emoji: string,
+    e: React.MouseEvent
+  ): Promise<void> => {
     e.stopPropagation();
-    if (!isLogged) {
+    if (!isLogged || !currentUserId) {
       alert("Inicia sesion con GitHub para reaccionar.");
       return;
     }
@@ -114,7 +123,7 @@ export default function Portfolio() {
         userId: currentUserId,
         emoji,
       });
-      refresh();
+      void refresh();
     } catch (err) {
       console.error(err);
     }
@@ -122,7 +131,6 @@ export default function Portfolio() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
-      {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
           <Github size={36} className="text-primary" />
@@ -130,7 +138,7 @@ export default function Portfolio() {
             <h1 className="text-3xl font-bold">Portfolio</h1>
             <p className="text-sm text-muted-foreground mt-1">
               Proyectos publicos de{" "}
-              <span className="text-primary font-semibold">@{GITHUB_USER}</span>{" "}
+              <span className="text-primary font-semibold">@{GITHUB_USER}</span>
               — reacciona y comenta con tu cuenta de GitHub.
             </p>
           </div>
@@ -146,7 +154,6 @@ export default function Portfolio() {
         </a>
       </div>
 
-      {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <div className="flex-1 min-w-[240px] flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-card">
           <Search size={16} className="text-muted-foreground" />
@@ -178,7 +185,6 @@ export default function Portfolio() {
         </span>
       </div>
 
-      {/* Estados */}
       {loading && (
         <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
           <Loader2 className="animate-spin" size={20} /> Cargando repositorios…
@@ -195,15 +201,14 @@ export default function Portfolio() {
         </div>
       )}
 
-      {/* Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filtered.map((repo) => {
-          const langColor = LANG_COLORS[repo.language] || "#8b949e";
+          const langColor = (repo.language && LANG_COLORS[repo.language]) || "#8b949e";
           const info = interactions[repo.id] || {
             reactions: {},
             commentCount: 0,
           };
-          const mine = myReactions[repo.id] || new Set();
+          const mine: Set<string> = myReactions[repo.id] || new Set<string>();
 
           return (
             <button
@@ -214,9 +219,7 @@ export default function Portfolio() {
             >
               <div className="flex items-center gap-2 text-primary">
                 {repo.private ? <Lock size={16} /> : <Book size={16} />}
-                <h3 className="font-semibold flex-1 break-words">
-                  {repo.name}
-                </h3>
+                <h3 className="font-semibold flex-1 break-words">{repo.name}</h3>
                 <a
                   href={repo.html_url}
                   target="_blank"
@@ -245,10 +248,7 @@ export default function Portfolio() {
                 )}
                 <Stat icon={<Star size={12} />} v={repo.stargazers_count} />
                 <Stat icon={<GitFork size={12} />} v={repo.forks_count} />
-                <Stat
-                  icon={<MessageSquare size={12} />}
-                  v={info.commentCount}
-                />
+                <Stat icon={<MessageSquare size={12} />} v={info.commentCount} />
               </div>
 
               <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border/60">
@@ -259,14 +259,18 @@ export default function Portfolio() {
                     <button
                       key={emoji}
                       type="button"
-                      onClick={(e) => handleReact(repo, emoji, e)}
+                      onClick={(e) => void handleReact(repo, emoji, e)}
                       className={cn(
                         "inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-xs transition",
                         active
                           ? "bg-primary/20 border-primary text-primary"
                           : "bg-background border-border text-muted-foreground hover:bg-accent"
                       )}
-                      title={isLogged ? "Reaccionar" : "Login con GitHub para reaccionar"}
+                      title={
+                        isLogged
+                          ? "Reaccionar"
+                          : "Login con GitHub para reaccionar"
+                      }
                     >
                       <span className="text-sm leading-none">{emoji}</span>
                       <span>{count}</span>
@@ -288,7 +292,7 @@ export default function Portfolio() {
           repo={selected}
           onClose={() => {
             setSelected(null);
-            refresh();
+            void refresh();
           }}
         />
       )}
@@ -296,7 +300,12 @@ export default function Portfolio() {
   );
 }
 
-function Stat({ icon, v }) {
+interface StatProps {
+  icon: ReactNode;
+  v: number;
+}
+
+function Stat({ icon, v }: StatProps) {
   return (
     <span className="inline-flex items-center gap-1">
       {icon}

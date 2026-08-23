@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
@@ -17,11 +17,14 @@ export default function TopBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [socialOpen, setSocialOpen] = useState(false);
-  const socialRef = useRef(null);
+  const socialRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const onClick = (e) => {
-      if (socialRef.current && !socialRef.current.contains(e.target)) {
+    const onClick = (e: MouseEvent) => {
+      if (
+        socialRef.current &&
+        !socialRef.current.contains(e.target as Node)
+      ) {
         setSocialOpen(false);
       }
     };
@@ -30,6 +33,7 @@ export default function TopBar() {
   }, []);
 
   const socialActive = location.pathname.startsWith("/social");
+  const meta = (user?.user_metadata || {}) as Record<string, string | undefined>;
 
   return (
     <header className="fixed top-0 inset-x-0 z-40 h-16 border-b border-border bg-background/80 backdrop-blur">
@@ -60,10 +64,26 @@ export default function TopBar() {
             </button>
             {socialOpen && (
               <div className="absolute top-full left-0 mt-2 min-w-[220px] rounded-lg border border-border bg-card shadow-xl p-1">
-                <MenuItem to="/social" label="Inicio social" onClick={() => setSocialOpen(false)} />
-                <MenuItem to="/social/posts" label="Posts" onClick={() => setSocialOpen(false)} />
-                <MenuItem to="/social/noticias" label="Noticias" onClick={() => setSocialOpen(false)} />
-                <MenuItem to="/social/redes-sociales" label="Redes sociales" onClick={() => setSocialOpen(false)} />
+                <MenuItem
+                  to="/social"
+                  label="Inicio social"
+                  onClick={() => setSocialOpen(false)}
+                />
+                <MenuItem
+                  to="/social/posts"
+                  label="Posts"
+                  onClick={() => setSocialOpen(false)}
+                />
+                <MenuItem
+                  to="/social/noticias"
+                  label="Noticias"
+                  onClick={() => setSocialOpen(false)}
+                />
+                <MenuItem
+                  to="/social/redes-sociales"
+                  label="Redes sociales"
+                  onClick={() => setSocialOpen(false)}
+                />
               </div>
             )}
           </div>
@@ -78,9 +98,9 @@ export default function TopBar() {
                 to="/profile"
                 className="flex items-center gap-2 rounded-full bg-secondary hover:bg-accent transition py-1 pl-1 pr-3"
               >
-                {user?.user_metadata?.avatar_url ? (
+                {meta.avatar_url ? (
                   <img
-                    src={user.user_metadata.avatar_url}
+                    src={meta.avatar_url}
                     alt="avatar"
                     className="h-7 w-7 rounded-full object-cover"
                   />
@@ -88,9 +108,7 @@ export default function TopBar() {
                   <User size={20} />
                 )}
                 <span className="text-sm font-medium max-w-[120px] truncate">
-                  {user?.user_metadata?.user_name ||
-                    user?.user_metadata?.name ||
-                    "Perfil"}
+                  {meta.user_name || meta.name || "Perfil"}
                 </span>
               </Link>
               <button
@@ -108,7 +126,7 @@ export default function TopBar() {
           ) : (
             <button
               type="button"
-              onClick={signInWithGitHub}
+              onClick={() => void signInWithGitHub()}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition"
             >
               <Github size={16} />
@@ -124,7 +142,14 @@ export default function TopBar() {
   );
 }
 
-function NavItem({ to, icon, label, end }) {
+interface NavItemProps {
+  to: string;
+  icon: ReactNode;
+  label: string;
+  end?: boolean;
+}
+
+function NavItem({ to, icon, label, end }: NavItemProps) {
   return (
     <NavLink
       to={to}
@@ -142,7 +167,13 @@ function NavItem({ to, icon, label, end }) {
   );
 }
 
-function MenuItem({ to, label, onClick }) {
+interface MenuItemProps {
+  to: string;
+  label: string;
+  onClick?: () => void;
+}
+
+function MenuItem({ to, label, onClick }: MenuItemProps) {
   return (
     <NavLink
       to={to}

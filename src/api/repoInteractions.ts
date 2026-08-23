@@ -1,8 +1,16 @@
 import { supabase } from "@/lib/supabase";
+import type {
+  MyReactionsMap,
+  RepoInteraction,
+  RepoSummary,
+  RepoSummaryMap,
+} from "@/types";
 
 const TABLE = "repo_interactions";
 
-export async function fetchInteractionsForRepos(repoIds) {
+export async function fetchInteractionsForRepos(
+  repoIds: number[]
+): Promise<RepoSummaryMap> {
   if (!repoIds?.length) return {};
   const { data, error } = await supabase
     .from(TABLE)
@@ -12,10 +20,16 @@ export async function fetchInteractionsForRepos(repoIds) {
     console.warn("[repoInteractions] fetch summary:", error.message);
     return {};
   }
-  const map = {};
-  for (const row of data || []) {
-    const bucket = map[row.repo_id] || { reactions: {}, commentCount: 0 };
-    if (row.type === "reaction") {
+  const map: RepoSummaryMap = {};
+  for (const row of (data || []) as Pick<
+    RepoInteraction,
+    "id" | "repo_id" | "type" | "emoji" | "user_id"
+  >[]) {
+    const bucket: RepoSummary = map[row.repo_id] || {
+      reactions: {},
+      commentCount: 0,
+    };
+    if (row.type === "reaction" && row.emoji) {
       bucket.reactions[row.emoji] = (bucket.reactions[row.emoji] || 0) + 1;
     } else if (row.type === "comment") {
       bucket.commentCount += 1;
@@ -25,7 +39,10 @@ export async function fetchInteractionsForRepos(repoIds) {
   return map;
 }
 
-export async function fetchMyReactionsForRepos(repoIds, userId) {
+export async function fetchMyReactionsForRepos(
+  repoIds: number[],
+  userId: string | null
+): Promise<MyReactionsMap> {
   if (!userId || !repoIds?.length) return {};
   const { data, error } = await supabase
     .from(TABLE)
@@ -34,14 +51,20 @@ export async function fetchMyReactionsForRepos(repoIds, userId) {
     .eq("type", "reaction")
     .in("repo_id", repoIds);
   if (error) return {};
-  const map = {};
-  for (const row of data || []) {
-    (map[row.repo_id] = map[row.repo_id] || new Set()).add(row.emoji);
+  const map: MyReactionsMap = {};
+  for (const row of (data || []) as Pick<
+    RepoInteraction,
+    "repo_id" | "emoji"
+  >[]) {
+    if (!row.emoji) continue;
+    (map[row.repo_id] = map[row.repo_id] || new Set<string>()).add(row.emoji);
   }
   return map;
 }
 
-export async function fetchComments(repoId) {
+export async function fetchComments(
+  repoId: number
+): Promise<RepoInteraction[]> {
   const { data, error } = await supabase
     .from(TABLE)
     .select(
@@ -54,10 +77,22 @@ export async function fetchComments(repoId) {
     console.warn("[repoInteractions] fetch comments:", error.message);
     return [];
   }
-  return data || [];
+  return (data || []) as unknown as RepoInteraction[];
 }
 
-export async function addComment({ repoId, repoName, userId, content }) {
+export interface AddCommentInput {
+  repoId: number;
+  repoName: string;
+  userId: string;
+  content: string;
+}
+
+export async function addComment({
+  repoId,
+  repoName,
+  userId,
+  content,
+}: AddCommentInput): Promise<RepoInteraction> {
   const { data, error } = await supabase
     .from(TABLE)
     .insert({
@@ -70,10 +105,22 @@ export async function addComment({ repoId, repoName, userId, content }) {
     .select()
     .single();
   if (error) throw error;
-  return data;
+  return data as unknown as RepoInteraction;
 }
 
-export async function toggleReaction({ repoId, repoName, userId, emoji }) {
+export interface ToggleReactionInput {
+  repoId: number;
+  repoName: string;
+  userId: string;
+  emoji: string;
+}
+
+export async function toggleReaction({
+  repoId,
+  repoName,
+  userId,
+  emoji,
+}: ToggleReactionInput): Promise<{ added: boolean }> {
   const { data: existing } = await supabase
     .from(TABLE)
     .select("id")

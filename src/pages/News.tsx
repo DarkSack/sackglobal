@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Newspaper, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { createNews, listNews } from "@/api/news";
 import { formatDateTime } from "@/lib/utils";
+import type { NewsItem } from "@/types";
 
 const ADMIN_EMAIL = "johanjafet4@gmail.com";
 
@@ -10,30 +11,31 @@ export default function News() {
   const { user, isLogged } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
 
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [title, setTitle] = useState("");
-  const [notice, setNotice] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [posting, setPosting] = useState(false);
+  const [items, setItems] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [title, setTitle] = useState<string>("");
+  const [notice, setNotice] = useState<string>("");
+  const [imageUrl, setImageUrl] = useState<string>("");
+  const [posting, setPosting] = useState<boolean>(false);
 
-  const load = async () => {
+  const load = async (): Promise<void> => {
     setLoading(true);
     try {
       setItems(await listNews());
     } catch (e) {
-      console.warn(e.message);
+      console.warn((e as Error).message);
     } finally {
       setLoading(false);
     }
   };
+
   useEffect(() => {
-    load();
+    void load();
   }, []);
 
-  const submit = async (e) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !notice.trim() || !isAdmin) return;
+    if (!title.trim() || !notice.trim() || !isAdmin || !user) return;
     setPosting(true);
     try {
       await createNews({
@@ -45,9 +47,9 @@ export default function News() {
       setTitle("");
       setNotice("");
       setImageUrl("");
-      load();
+      void load();
     } catch (err) {
-      alert(err.message);
+      alert((err as Error).message);
     } finally {
       setPosting(false);
     }
@@ -123,9 +125,7 @@ export default function News() {
               className="p-4 rounded-xl border border-border bg-card"
             >
               <div className="flex items-baseline justify-between gap-3 mb-2">
-                <h3 className="font-semibold text-primary text-lg">
-                  {n.title}
-                </h3>
+                <h3 className="font-semibold text-primary text-lg">{n.title}</h3>
                 <span className="text-[11px] text-muted-foreground shrink-0">
                   {formatDateTime(n.created_at)}
                 </span>

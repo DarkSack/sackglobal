@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
+import type { Post } from "@/types";
 
-export async function listPosts() {
+export async function listPosts(): Promise<Post[]> {
   const { data, error } = await supabase
     .from("posts")
     .select(
@@ -8,20 +9,30 @@ export async function listPosts() {
     )
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return data || [];
+  return (data || []) as unknown as Post[];
 }
 
-export async function createPost({ userId, content, imageUrl }) {
+export interface CreatePostInput {
+  userId: string;
+  content: string;
+  imageUrl?: string | null;
+}
+
+export async function createPost({
+  userId,
+  content,
+  imageUrl,
+}: CreatePostInput): Promise<Post> {
   const { data, error } = await supabase
     .from("posts")
     .insert({ user_id: userId, content, image_url: imageUrl || null })
     .select()
     .single();
   if (error) throw error;
-  return data;
+  return data as unknown as Post;
 }
 
-export async function deletePost(id) {
+export async function deletePost(id: number): Promise<void> {
   const { error } = await supabase.from("posts").delete().eq("id", id);
   if (error) throw error;
 }

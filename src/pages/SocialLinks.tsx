@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Share2, ExternalLink, Trash2, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { createLink, deleteLink, listLinks } from "@/api/socialLinks";
+import type { SocialLink } from "@/types";
 
 const ADMIN_EMAIL = "johanjafet4@gmail.com";
 
@@ -9,29 +10,30 @@ export default function SocialLinks() {
   const { user } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
 
-  const [links, setLinks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [name, setName] = useState("");
-  const [url, setUrl] = useState("");
-  const [channel, setChannel] = useState("");
-  const [iconify, setIconify] = useState("");
-  const [posting, setPosting] = useState(false);
+  const [links, setLinks] = useState<SocialLink[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [name, setName] = useState<string>("");
+  const [url, setUrl] = useState<string>("");
+  const [channel, setChannel] = useState<string>("");
+  const [iconify, setIconify] = useState<string>("");
+  const [posting, setPosting] = useState<boolean>(false);
 
-  const load = async () => {
+  const load = async (): Promise<void> => {
     setLoading(true);
     try {
       setLinks(await listLinks());
     } catch (e) {
-      console.warn(e.message);
+      console.warn((e as Error).message);
     } finally {
       setLoading(false);
     }
   };
+
   useEffect(() => {
-    load();
+    void load();
   }, []);
 
-  const submit = async (e) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !url.trim() || !isAdmin) return;
     setPosting(true);
@@ -46,21 +48,21 @@ export default function SocialLinks() {
       setUrl("");
       setChannel("");
       setIconify("");
-      load();
+      void load();
     } catch (err) {
-      alert(err.message);
+      alert((err as Error).message);
     } finally {
       setPosting(false);
     }
   };
 
-  const remove = async (id) => {
+  const remove = async (id: number): Promise<void> => {
     if (!confirm("Borrar este enlace?")) return;
     try {
       await deleteLink(id);
-      load();
+      void load();
     } catch (err) {
-      alert(err.message);
+      alert((err as Error).message);
     }
   };
 
@@ -156,7 +158,7 @@ export default function SocialLinks() {
               {isAdmin && (
                 <button
                   type="button"
-                  onClick={() => remove(l.id)}
+                  onClick={() => void remove(l.id)}
                   className="p-2 rounded text-muted-foreground hover:text-destructive hover:bg-accent transition"
                   title="Borrar"
                 >

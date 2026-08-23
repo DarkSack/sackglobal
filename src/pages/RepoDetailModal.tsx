@@ -1,15 +1,28 @@
-import { useEffect, useState } from "react";
-import { X, ExternalLink, MessageSquare, Loader2, Github, Book } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+import {
+  X,
+  ExternalLink,
+  MessageSquare,
+  Loader2,
+  Github,
+  Book,
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { addComment, fetchComments } from "@/api/repoInteractions";
 import { formatDateTime } from "@/lib/utils";
+import type { GitHubRepo, RepoInteraction } from "@/types";
 
-export default function RepoDetailModal({ repo, onClose }) {
+interface RepoDetailModalProps {
+  repo: GitHubRepo;
+  onClose: () => void;
+}
+
+export default function RepoDetailModal({ repo, onClose }: RepoDetailModalProps) {
   const { user, isLogged } = useAuth();
-  const [comments, setComments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [newComment, setNewComment] = useState("");
-  const [posting, setPosting] = useState(false);
+  const [comments, setComments] = useState<RepoInteraction[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [newComment, setNewComment] = useState<string>("");
+  const [posting, setPosting] = useState<boolean>(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -26,9 +39,9 @@ export default function RepoDetailModal({ repo, onClose }) {
     };
   }, [repo.id]);
 
-  const submit = async (e) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || !isLogged) return;
+    if (!newComment.trim() || !isLogged || !user) return;
     setPosting(true);
     try {
       await addComment({
@@ -56,7 +69,6 @@ export default function RepoDetailModal({ repo, onClose }) {
         className="w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col rounded-2xl border border-border bg-card"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <header className="flex items-center justify-between gap-3 p-4 border-b border-border">
           <div className="flex items-center gap-2 text-primary min-w-0">
             <Book size={18} />
@@ -81,7 +93,6 @@ export default function RepoDetailModal({ repo, onClose }) {
           </div>
         </header>
 
-        {/* Body */}
         <div className="p-5 overflow-y-auto">
           <p className="text-sm mb-3">
             {repo.description || (

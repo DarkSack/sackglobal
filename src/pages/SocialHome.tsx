@@ -1,7 +1,21 @@
 import { Link } from "react-router-dom";
-import { FileText, Newspaper, Share2, ArrowRight, Users } from "lucide-react";
+import {
+  FileText,
+  Newspaper,
+  Share2,
+  ArrowRight,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 
-const cards = [
+interface SocialCard {
+  to: string;
+  icon: LucideIcon;
+  title: string;
+  desc: string;
+}
+
+const cards: SocialCard[] = [
   {
     to: "/social/posts",
     icon: FileText,

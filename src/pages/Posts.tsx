@@ -1,34 +1,36 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { FileText, Trash2, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { createPost, deletePost, listPosts } from "@/api/posts";
 import { formatDateTime } from "@/lib/utils";
+import type { Post } from "@/types";
 
 export default function Posts() {
   const { user, isLogged } = useAuth();
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [content, setContent] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [posting, setPosting] = useState(false);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [content, setContent] = useState<string>("");
+  const [imageUrl, setImageUrl] = useState<string>("");
+  const [posting, setPosting] = useState<boolean>(false);
 
-  const load = async () => {
+  const load = async (): Promise<void> => {
     setLoading(true);
     try {
       setPosts(await listPosts());
     } catch (e) {
-      console.warn(e.message);
+      console.warn((e as Error).message);
     } finally {
       setLoading(false);
     }
   };
+
   useEffect(() => {
-    load();
+    void load();
   }, []);
 
-  const submit = async (e) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!content.trim() || !isLogged) return;
+    if (!content.trim() || !isLogged || !user) return;
     setPosting(true);
     try {
       await createPost({
@@ -38,21 +40,21 @@ export default function Posts() {
       });
       setContent("");
       setImageUrl("");
-      load();
+      void load();
     } catch (err) {
-      alert(err.message);
+      alert((err as Error).message);
     } finally {
       setPosting(false);
     }
   };
 
-  const remove = async (id) => {
+  const remove = async (id: number): Promise<void> => {
     if (!confirm("Borrar este post?")) return;
     try {
       await deletePost(id);
-      load();
+      void load();
     } catch (err) {
-      alert(err.message);
+      alert((err as Error).message);
     }
   };
 
@@ -136,7 +138,7 @@ export default function Posts() {
                 {isLogged && user?.id === p.user_id && (
                   <button
                     type="button"
-                    onClick={() => remove(p.id)}
+                    onClick={() => void remove(p.id)}
                     className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-accent transition"
                     title="Borrar"
                   >

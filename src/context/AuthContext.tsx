@@ -1,12 +1,28 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
-const AuthContext = createContext(null);
+interface AuthContextValue {
+  session: Session | null;
+  user: User | null;
+  loading: boolean;
+  isLogged: boolean;
+  signInWithGitHub: () => Promise<unknown>;
+  signOut: () => Promise<unknown>;
+}
 
-export function AuthProvider({ children }) {
-  const [session, setSession] = useState(null);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     supabase.auth
@@ -21,7 +37,7 @@ export function AuthProvider({ children }) {
       setSession(s);
       setUser(s?.user || null);
       if (s?.user) {
-        const meta = s.user.user_metadata || {};
+        const meta = (s.user.user_metadata || {}) as Record<string, string>;
         try {
           await supabase.from("users").upsert(
             {
@@ -38,7 +54,7 @@ export function AuthProvider({ children }) {
             { onConflict: "user_id" }
           );
         } catch (err) {
-          console.warn("upsert user:", err.message);
+          console.warn("upsert user:", (err as Error).message);
         }
       }
     });
@@ -70,4 +86,8 @@ export function AuthProvider({ children }) {
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth debe usarse dentro de <AuthProvider>");
+  return ctx;
+}

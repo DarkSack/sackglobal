@@ -1,11 +1,11 @@
-import { clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-export function cn(...inputs) {
+export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(iso) {
+export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("es-MX", {
     year: "numeric",
@@ -14,7 +14,7 @@ export function formatDate(iso) {
   });
 }
 
-export function formatDateTime(iso) {
+export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return "";
   return new Date(iso).toLocaleString("es-MX", {
     year: "numeric",

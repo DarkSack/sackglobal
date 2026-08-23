@@ -1,12 +1,13 @@
 import { User, Mail, Github, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import type { ReactNode } from "react";
 
 export default function Profile() {
   const { user, isLogged, signInWithGitHub, signOut } = useAuth();
   const navigate = useNavigate();
 
-  if (!isLogged) {
+  if (!isLogged || !user) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <User size={40} className="mx-auto text-muted-foreground mb-4" />
@@ -16,7 +17,7 @@ export default function Profile() {
         </p>
         <button
           type="button"
-          onClick={signInWithGitHub}
+          onClick={() => void signInWithGitHub()}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-primary text-primary-foreground font-semibold hover:opacity-90 transition"
         >
           <Github size={16} /> Entrar con GitHub
@@ -25,7 +26,7 @@ export default function Profile() {
     );
   }
 
-  const meta = user.user_metadata || {};
+  const meta = (user.user_metadata || {}) as Record<string, string | undefined>;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -56,7 +57,7 @@ export default function Profile() {
         )}
 
         <div className="w-full mt-4 grid gap-3 text-sm">
-          <Row icon={<Mail size={16} />} label="Email" value={user.email} />
+          <Row icon={<Mail size={16} />} label="Email" value={user.email || ""} />
           <Row icon={<User size={16} />} label="ID" value={user.id} />
         </div>
 
@@ -75,7 +76,13 @@ export default function Profile() {
   );
 }
 
-function Row({ icon, label, value }) {
+interface RowProps {
+  icon: ReactNode;
+  label: string;
+  value: string;
+}
+
+function Row({ icon, label, value }: RowProps) {
   return (
     <div className="flex items-center gap-3 p-3 rounded-md bg-background">
       <span className="text-primary">{icon}</span>
