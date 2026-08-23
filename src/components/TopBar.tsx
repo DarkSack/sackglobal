@@ -76,6 +76,7 @@ export default function TopBar() {
                 <MenuItem
                   to="/social"
                   label="Inicio social"
+                  end
                   onClick={() => setSocialOpen(false)}
                 />
                 <MenuItem
@@ -176,13 +177,15 @@ function NavItem({ to, icon, label, end }: NavItemProps) {
 interface MenuItemProps {
   to: string;
   label: string;
+  end?: boolean;
   onClick?: () => void;
 }
 
-function MenuItem({ to, label, onClick }: MenuItemProps) {
+function MenuItem({ to, label, end, onClick }: MenuItemProps) {
   return (
     <NavLink
       to={to}
+      end={end}
       onClick={onClick}
       className={({ isActive }) =>
         cn(
