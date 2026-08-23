@@ -1,12 +1,34 @@
-import { User, Mail, Github, LogOut } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { User, Mail, Github, LogOut, UserPlus, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/lib/notify";
-import type { ReactNode } from "react";
 
 export default function Profile() {
   const { user, isLogged, signInWithGitHub, signOut } = useAuth();
   const navigate = useNavigate();
+  const [loggingIn, setLoggingIn] = useState(false);
+
+  const handleLogin = async () => {
+    if (loggingIn) return;
+    setLoggingIn(true);
+    try {
+      await signInWithGitHub();
+    } catch (err) {
+      console.error(err);
+      toast.error("No se pudo iniciar el login con GitHub.");
+      setLoggingIn(false);
+    }
+  };
+
+  const handleSwitchAccount = () => {
+    if (loggingIn) return;
+    window.open("https://github.com/logout", "_blank", "noopener,noreferrer");
+    toast.info(
+      "Cierra sesion en la pestana de GitHub y vuelve aca a pulsar 'Entrar con GitHub'.",
+      { duration: 6000 }
+    );
+  };
 
   if (!isLogged || !user) {
     return (
@@ -16,13 +38,29 @@ export default function Profile() {
         <p className="text-sm text-muted-foreground mb-6">
           Inicia sesion con GitHub para ver tu perfil.
         </p>
-        <button
-          type="button"
-          onClick={() => void signInWithGitHub()}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-primary text-primary-foreground font-semibold hover:opacity-90 transition"
-        >
-          <Github size={16} /> Entrar con GitHub
-        </button>
+        <div className="inline-flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void handleLogin()}
+            disabled={loggingIn}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-primary text-primary-foreground font-semibold hover:opacity-90 disabled:opacity-70 disabled:cursor-wait transition"
+          >
+            {loggingIn ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Github size={16} />
+            )}
+            {loggingIn ? "Redirigiendo…" : "Entrar con GitHub"}
+          </button>
+          <button
+            type="button"
+            onClick={handleSwitchAccount}
+            disabled={loggingIn}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition"
+          >
+            <UserPlus size={12} /> Usar otra cuenta de GitHub
+          </button>
+        </div>
       </div>
     );
   }

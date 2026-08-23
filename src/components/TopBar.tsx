@@ -8,6 +8,8 @@ import {
   LogIn,
   LogOut,
   User,
+  UserPlus,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
@@ -18,6 +20,7 @@ export default function TopBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [socialOpen, setSocialOpen] = useState(false);
+  const [loggingIn, setLoggingIn] = useState(false);
   const socialRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -35,6 +38,29 @@ export default function TopBar() {
 
   const socialActive = location.pathname.startsWith("/social");
   const meta = (user?.user_metadata || {}) as Record<string, string | undefined>;
+
+  const handleLogin = async () => {
+    if (loggingIn) return;
+    setLoggingIn(true);
+    try {
+      await signInWithGitHub();
+      // El navegador se redirige a GitHub; si vuelve aca sin redirect es que fallo
+    } catch (err) {
+      console.error(err);
+      toast.error("No se pudo iniciar el login con GitHub.");
+      setLoggingIn(false);
+    }
+  };
+
+  const handleSwitchAccount = () => {
+    if (loggingIn) return;
+    // Abrir la pagina de logout de GitHub en otra pestana
+    window.open("https://github.com/logout", "_blank", "noopener,noreferrer");
+    toast.info(
+      "Cierra sesion en la pestana de GitHub y vuelve aca a pulsar 'Entrar con GitHub'.",
+      { duration: 6000 }
+    );
+  };
 
   const handleLogout = async () => {
     await signOut();
@@ -131,17 +157,36 @@ export default function TopBar() {
               </button>
             </>
           ) : (
-            <button
-              type="button"
-              onClick={() => void signInWithGitHub()}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition"
-            >
-              <Github size={16} />
-              <span className="hidden sm:inline">Entrar con GitHub</span>
-              <span className="sm:hidden">
-                <LogIn size={16} />
-              </span>
-            </button>
+            <div className="inline-flex rounded-md overflow-hidden border border-primary/60">
+              <button
+                type="button"
+                onClick={() => void handleLogin()}
+                disabled={loggingIn}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-70 disabled:cursor-wait transition"
+              >
+                {loggingIn ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Github size={16} />
+                )}
+                <span className="hidden sm:inline">
+                  {loggingIn ? "Redirigiendo…" : "Entrar con GitHub"}
+                </span>
+                <span className="sm:hidden">
+                  {loggingIn ? null : <LogIn size={16} />}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={handleSwitchAccount}
+                disabled={loggingIn}
+                title="Usar otra cuenta de GitHub"
+                aria-label="Usar otra cuenta de GitHub"
+                className="inline-flex items-center px-2.5 bg-primary/80 text-primary-foreground border-l border-primary-foreground/20 hover:bg-primary/95 disabled:opacity-60 disabled:cursor-not-allowed transition"
+              >
+                <UserPlus size={14} />
+              </button>
+            </div>
           )}
         </div>
       </div>
