@@ -50,6 +50,15 @@ export interface Post {
   users?: UserPublic | null;
 }
 
+export interface PostComment {
+  id: string;
+  post_id: number;
+  user_id: string;
+  content: string;
+  created_at: string;
+  users?: UserPublic | null;
+}
+
 export interface NewsItem {
   id: number;
   title: string;
