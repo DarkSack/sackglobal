@@ -3,6 +3,7 @@ import { Newspaper, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { createNews, listNews } from "@/api/news";
 import { formatDateTime } from "@/lib/utils";
+import { toast } from "@/lib/notify";
 import type { NewsItem } from "@/types";
 
 const ADMIN_EMAIL = "johanjafet4@gmail.com";
@@ -47,9 +48,10 @@ export default function News() {
       setTitle("");
       setNotice("");
       setImageUrl("");
+      toast.success("Noticia publicada");
       void load();
     } catch (err) {
-      alert((err as Error).message);
+      toast.error((err as Error).message);
     } finally {
       setPosting(false);
     }

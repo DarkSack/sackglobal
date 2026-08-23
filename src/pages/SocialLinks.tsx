@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Share2, ExternalLink, Trash2, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { createLink, deleteLink, listLinks } from "@/api/socialLinks";
+import { confirm, toast } from "@/lib/notify";
 import type { SocialLink } from "@/types";
 
 const ADMIN_EMAIL = "johanjafet4@gmail.com";
@@ -48,21 +49,29 @@ export default function SocialLinks() {
       setUrl("");
       setChannel("");
       setIconify("");
+      toast.success("Enlace añadido");
       void load();
     } catch (err) {
-      alert((err as Error).message);
+      toast.error((err as Error).message);
     } finally {
       setPosting(false);
     }
   };
 
   const remove = async (id: number): Promise<void> => {
-    if (!confirm("Borrar este enlace?")) return;
+    const ok = await confirm({
+      title: "Borrar este enlace?",
+      icon: "warning",
+      confirmButtonText: "Si, borrar",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await deleteLink(id);
+      toast.success("Enlace borrado");
       void load();
     } catch (err) {
-      alert((err as Error).message);
+      toast.error((err as Error).message);
     }
   };
 

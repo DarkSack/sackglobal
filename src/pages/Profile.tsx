@@ -1,6 +1,7 @@
 import { User, Mail, Github, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "@/lib/notify";
 import type { ReactNode } from "react";
 
 export default function Profile() {
@@ -65,6 +66,7 @@ export default function Profile() {
           type="button"
           onClick={async () => {
             await signOut();
+            toast.info("Sesión cerrada.");
             navigate("/");
           }}
           className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-md border border-border text-muted-foreground hover:text-destructive hover:bg-accent transition"

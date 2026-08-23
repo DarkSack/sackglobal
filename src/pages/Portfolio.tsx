@@ -22,6 +22,7 @@ import {
 } from "@/api/repoInteractions";
 import RepoDetailModal from "@/pages/RepoDetailModal";
 import { cn, formatDate } from "@/lib/utils";
+import { requireLoginPrompt, toast } from "@/lib/notify";
 import type {
   GitHubRepo,
   MyReactionsMap,
@@ -43,7 +44,7 @@ const LANG_COLORS: Record<string, string> = {
 };
 
 export default function Portfolio() {
-  const { user, isLogged } = useAuth();
+  const { user, isLogged, signInWithGitHub } = useAuth();
   const currentUserId = user?.id || null;
 
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
@@ -113,19 +114,24 @@ export default function Portfolio() {
   ): Promise<void> => {
     e.stopPropagation();
     if (!isLogged || !currentUserId) {
-      alert("Inicia sesion con GitHub para reaccionar.");
+      await requireLoginPrompt("reaccionar", () => void signInWithGitHub());
       return;
     }
     try {
-      await toggleReaction({
+      const { added } = await toggleReaction({
         repoId: repo.id,
         repoName: repo.name,
         userId: currentUserId,
         emoji,
       });
+      toast.success(
+        added ? `${emoji} añadida a ${repo.name}` : `${emoji} retirada de ${repo.name}`,
+        { duration: 1600 }
+      );
       void refresh();
     } catch (err) {
       console.error(err);
+      toast.error("No se pudo registrar la reacción.");
     }
   };
 

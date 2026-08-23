@@ -3,6 +3,7 @@ import { FileText, Trash2, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { createPost, deletePost, listPosts } from "@/api/posts";
 import { formatDateTime } from "@/lib/utils";
+import { confirm, toast } from "@/lib/notify";
 import type { Post } from "@/types";
 
 export default function Posts() {
@@ -40,21 +41,30 @@ export default function Posts() {
       });
       setContent("");
       setImageUrl("");
+      toast.success("Post publicado");
       void load();
     } catch (err) {
-      alert((err as Error).message);
+      toast.error((err as Error).message);
     } finally {
       setPosting(false);
     }
   };
 
   const remove = async (id: number): Promise<void> => {
-    if (!confirm("Borrar este post?")) return;
+    const ok = await confirm({
+      title: "Borrar este post?",
+      text: "Esta accion no se puede deshacer.",
+      icon: "warning",
+      confirmButtonText: "Si, borrar",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await deletePost(id);
+      toast.success("Post borrado");
       void load();
     } catch (err) {
-      alert((err as Error).message);
+      toast.error((err as Error).message);
     }
   };
 

@@ -10,6 +10,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { addComment, fetchComments } from "@/api/repoInteractions";
 import { formatDateTime } from "@/lib/utils";
+import { toast } from "@/lib/notify";
 import type { GitHubRepo, RepoInteraction } from "@/types";
 
 interface RepoDetailModalProps {
@@ -52,9 +53,10 @@ export default function RepoDetailModal({ repo, onClose }: RepoDetailModalProps)
       });
       setNewComment("");
       setComments(await fetchComments(repo.id));
+      toast.success("Comentario publicado");
     } catch (err) {
       console.error(err);
-      alert("No se pudo publicar el comentario.");
+      toast.error("No se pudo publicar el comentario");
     } finally {
       setPosting(false);
     }

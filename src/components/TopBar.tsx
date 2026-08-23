@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
+import { toast } from "@/lib/notify";
 
 export default function TopBar() {
   const { user, isLogged, signInWithGitHub, signOut } = useAuth();
@@ -35,6 +36,12 @@ export default function TopBar() {
   const socialActive = location.pathname.startsWith("/social");
   const meta = (user?.user_metadata || {}) as Record<string, string | undefined>;
 
+  const handleLogout = async () => {
+    await signOut();
+    toast.info("Sesión cerrada.");
+    navigate("/");
+  };
+
   return (
     <header className="fixed top-0 inset-x-0 z-40 h-16 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto max-w-7xl h-full px-4 flex items-center gap-4">
@@ -42,9 +49,11 @@ export default function TopBar() {
           to="/"
           className="flex items-center gap-2 font-bold text-lg text-foreground hover:text-primary transition"
         >
-          <span className="grid place-items-center h-8 w-8 rounded-md bg-primary text-primary-foreground text-sm">
-            S
-          </span>
+          <img
+            src="/logo.png"
+            alt="SackGlobal"
+            className="h-9 w-9 rounded-md object-contain"
+          />
           <span>SackGlobal</span>
         </Link>
 
@@ -113,10 +122,7 @@ export default function TopBar() {
               </Link>
               <button
                 type="button"
-                onClick={async () => {
-                  await signOut();
-                  navigate("/");
-                }}
+                onClick={handleLogout}
                 title="Cerrar sesion"
                 className="p-2 rounded-md text-muted-foreground hover:text-destructive hover:bg-accent transition"
               >
