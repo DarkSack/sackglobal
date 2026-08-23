@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { createNews, listNews } from "@/api/news";
 import { formatDateTime } from "@/lib/utils";
 import { toast } from "@/lib/notify";
+import { findProfanity } from "@/lib/profanity";
 import type { NewsItem } from "@/types";
 
 const ADMIN_EMAIL = "johanjafet4@gmail.com";
@@ -37,6 +38,16 @@ export default function News() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !notice.trim() || !isAdmin || !user) return;
+    const bad = findProfanity(`${title} ${notice}`);
+    if (bad.length > 0) {
+      toast.warning(
+        `Evita palabras como: ${bad.slice(0, 3).join(", ")}${
+          bad.length > 3 ? "…" : ""
+        }`,
+        { duration: 4500 }
+      );
+      return;
+    }
     setPosting(true);
     try {
       await createNews({

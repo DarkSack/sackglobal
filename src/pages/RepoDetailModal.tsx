@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { addComment, fetchComments } from "@/api/repoInteractions";
 import { formatDateTime } from "@/lib/utils";
 import { toast } from "@/lib/notify";
+import { findProfanity } from "@/lib/profanity";
 import type { GitHubRepo, RepoInteraction } from "@/types";
 
 interface RepoDetailModalProps {
@@ -43,6 +44,16 @@ export default function RepoDetailModal({ repo, onClose }: RepoDetailModalProps)
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!newComment.trim() || !isLogged || !user) return;
+    const bad = findProfanity(newComment);
+    if (bad.length > 0) {
+      toast.warning(
+        `Evita palabras como: ${bad.slice(0, 3).join(", ")}${
+          bad.length > 3 ? "…" : ""
+        }`,
+        { duration: 4500 }
+      );
+      return;
+    }
     setPosting(true);
     try {
       await addComment({

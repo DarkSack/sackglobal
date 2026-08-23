@@ -17,7 +17,20 @@ import {
 } from "@/api/postComments";
 import { formatDateTime } from "@/lib/utils";
 import { confirm, toast } from "@/lib/notify";
+import { findProfanity } from "@/lib/profanity";
 import type { Post, PostComment } from "@/types";
+
+function warnProfanity(text: string): boolean {
+  const bad = findProfanity(text);
+  if (bad.length === 0) return false;
+  toast.warning(
+    `Evita palabras como: ${bad.slice(0, 3).join(", ")}${
+      bad.length > 3 ? "…" : ""
+    }`,
+    { duration: 4500 }
+  );
+  return true;
+}
 
 const ADMIN_EMAIL = "johanjafet4@gmail.com";
 
@@ -65,6 +78,7 @@ export default function Posts() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!content.trim() || !isAdmin || !user) return;
+    if (warnProfanity(content)) return;
     setPosting(true);
     try {
       await createPost({
@@ -218,6 +232,7 @@ function PostCard({
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!newText.trim() || !currentUserId) return;
+    if (warnProfanity(newText)) return;
     setPosting(true);
     try {
       await addPostComment({
