@@ -14,6 +14,22 @@ export interface GitHubRepo {
   archived: boolean;
 }
 
+/** Subconjunto del perfil publico de GitHub que usa el portafolio. */
+export interface GitHubProfile {
+  login: string;
+  name: string | null;
+  bio: string | null;
+  avatar_url: string;
+  html_url: string;
+  location: string | null;
+  company: string | null;
+  blog: string | null;
+  twitter_username: string | null;
+  public_repos: number;
+  followers: number;
+  created_at: string;
+}
+
 export interface UserPublic {
   nickname: string | null;
   avatar_url: string | null;
