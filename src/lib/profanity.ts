@@ -1,21 +1,33 @@
 // ══════════════════════════════════════════════════════════════════
-// Filtro de palabras obscenas (ES + EN)
+// Filtro de palabras obscenas (ES + EN) — aviso en el cliente
 //
-// Detecta profanidades en un texto normalizando tildes y leetspeak
-// (a=@, e=3, i=1, o=0, s=5$, t=7). Diseñado para minimizar falsos
-// positivos: match por token completo, con inflexiones explicitas.
+// ESTE FILTRO NO PROTEGE NADA POR SÍ SOLO. La clave `anon` es pública,
+// así que cualquiera puede insertar directo contra PostgREST y saltarse
+// todo lo que haya aquí. La barrera real son los triggers de la base de
+// datos (supabase/migrations/20260830_moderacion_servidor.sql), que
+// rechazan el INSERT venga de donde venga.
+//
+// Lo que aporta esta copia es rapidez: avisa mientras se escribe, sin
+// esperar al viaje de red ni gastar un error del servidor.
+//
+// Las reglas de normalización y la lista deben coincidir con las de
+// `public.normalize_text` y `public.blocked_words`. Si cambias una,
+// cambia la otra: si divergen, el usuario ve un aviso que no se cumple,
+// o peor, no ve aviso y el servidor le rechaza el envío.
 // ══════════════════════════════════════════════════════════════════
 
-// ── Diccionarios (inflexiones explicitas para evitar falsos positivos) ────
+// ── Diccionario ───────────────────────────────────────────────────
+// Inflexiones explícitas en lugar de raíces: "put" cazaría "computar".
 const BAD_WORDS_ES: string[] = [
-  // Sexuales / insultos comunes
-  "puta", "putas", "puto", "putos", "putazo", "putona",
+  "puta", "putas", "puto", "putos", "putazo", "putona", "puton", "putones",
   "pendejo", "pendejos", "pendeja", "pendejas", "pendejada", "pendejadas",
   "cabron", "cabrones", "cabrona", "cabronazo",
   "mierda", "mierdas", "mierdero",
   "verga", "vergas", "vergazo",
-  "chinga", "chingar", "chingada", "chingadas", "chingado", "chingados", "chingon", "chingona",
-  "cono", "conos", "conazo",
+  "chinga", "chingar", "chingada", "chingadas", "chingado", "chingados",
+  "chingon", "chingona",
+  // Con eñe a propósito: ver la nota de normalización más abajo.
+  "coño", "coños", "coñazo",
   "joder", "jodido", "jodida", "jodete",
   "gilipollas", "gilipuertas",
   "mamon", "mamones", "mamona", "mamonazo",
@@ -24,8 +36,6 @@ const BAD_WORDS_ES: string[] = [
   "carajo", "carajos",
   "culero", "culera", "culeros",
   "marica", "maricas", "maricon", "maricones", "mariconada",
-  "puton", "putones", "putona",
-  "coger",
   "follar", "follada", "follado",
   "hijueputa", "hijoputa", "hijaputa", "hijodeputa", "hijadeputa",
   // Slurs / discriminatorios
@@ -39,21 +49,21 @@ const BAD_WORDS_EN: string[] = [
   "bitch", "bitches", "bitchy",
   "asshole", "assholes",
   "cunt", "cunts",
-  "dick", "dicks", "dickhead",
-  "cock", "cocks", "cocksucker",
-  "pussy", "pussies",
+  "dickhead",
+  "cocksucker",
+  "pussies",
   "bastard", "bastards",
-  "motherfucker", "motherfuckers", "mf", "mfs",
+  "motherfucker", "motherfuckers",
   "twat", "twats",
   "wanker", "wankers",
   "slut", "sluts", "slutty",
   "whore", "whores",
-  "faggot", "faggots", "fag", "fags",
+  "faggot", "faggots",
   "retard", "retarded", "retards",
   "nigger", "niggers", "nigga", "niggas",
 ];
 
-// ── Normalizacion ────────────────────────────────────────────────
+// ── Normalización ────────────────────────────────────────────────
 const LEET_MAP: Record<string, string> = {
   "@": "a",
   "4": "a",
@@ -75,36 +85,57 @@ function deleet(s: string): string {
     .join("");
 }
 
+/** Marcador temporal para la eñe. No aparece en texto real. */
+const ENYE_TOKEN = "";
+
+/**
+ * Quita tildes pero CONSERVA la eñe.
+ *
+ * La versión anterior la convertía en ene, y eso hacía que "coño"
+ * quedara como "cono": el filtro bloqueaba la palabra "cono" —la figura
+ * geométrica, el del helado— en cualquier frase. En español la eñe es
+ * una letra propia, no una ene con adorno.
+ *
+ * Se aparta la eñe antes de descomponer en NFD en lugar de intentar
+ * salvarla con un lookbehind sobre los diacríticos combinantes: esos son
+ * caracteres invisibles en el fuente, y una regla que depende de su
+ * posición exacta se rompe en cuanto alguien reformatea el fichero.
+ */
 function stripAccents(s: string): string {
-  return s.normalize("NFD").replace(/[̀-ͯ]/g, "");
+  return s
+    .replace(/ñ/g, ENYE_TOKEN)
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(new RegExp(ENYE_TOKEN, "g"), "ñ");
 }
 
 function normalize(token: string): string {
   return stripAccents(deleet(token));
 }
 
-// Set de todas las palabras prohibidas ya normalizadas
-const ALL_BAD: Set<string> = new Set(
+const ALL_BAD: ReadonlySet<string> = new Set(
   [...BAD_WORDS_ES, ...BAD_WORDS_EN].map((w) => normalize(w))
 );
 
-// Regex para tokens: letras, digitos, tildes/eñes, y simbolos leet
+// Tokens: letras, dígitos, eñe, vocales acentuadas y los símbolos leet.
 const TOKEN_RE = /[a-zA-Z0-9ñÑáéíóúÁÉÍÓÚüÜ@!$€]+/g;
 
-// ── API publica ──────────────────────────────────────────────────
+/** Por debajo de 3 caracteres los falsos positivos superan a los aciertos. */
+const MIN_LENGTH = 3;
 
-/** Devuelve el conjunto (unico) de palabras del texto que dieron match. */
+// ── API pública ──────────────────────────────────────────────────
+
+/** Devuelve las palabras del texto que dieron match, sin repetir. */
 export function findProfanity(text: string): string[] {
   if (!text) return [];
   const matches = text.match(TOKEN_RE);
   if (!matches) return [];
+
   const found = new Set<string>();
   for (const raw of matches) {
     const norm = normalize(raw);
-    if (norm.length < 3) continue; // ignora tokens muy cortos
-    if (ALL_BAD.has(norm)) {
-      found.add(raw);
-    }
+    if (norm.length < MIN_LENGTH) continue;
+    if (ALL_BAD.has(norm)) found.add(raw);
   }
   return Array.from(found);
 }
@@ -112,15 +143,4 @@ export function findProfanity(text: string): string[] {
 /** True si detecta al menos una palabra prohibida. */
 export function hasProfanity(text: string): boolean {
   return findProfanity(text).length > 0;
-}
-
-/** Reemplaza cada palabra prohibida con `p***a` (primera y ultima + asteriscos). */
-export function censor(text: string, mask = "*"): string {
-  if (!text) return text;
-  return text.replace(TOKEN_RE, (tok) => {
-    const norm = normalize(tok);
-    if (norm.length < 3 || !ALL_BAD.has(norm)) return tok;
-    if (tok.length <= 2) return mask.repeat(tok.length);
-    return tok[0] + mask.repeat(tok.length - 2) + tok[tok.length - 1];
-  });
 }
