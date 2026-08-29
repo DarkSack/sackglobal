@@ -1,7 +1,6 @@
-import Swal, { type SweetAlertIcon } from "sweetalert2";
+import type { SweetAlertIcon } from "sweetalert2";
 import Toastify from "toastify-js";
 import "toastify-js/src/toastify.css";
-import "sweetalert2/dist/sweetalert2.min.css";
 
 // ── Paleta compartida con el tema del proyecto ────────────────────
 const COLORS = {
@@ -74,25 +73,51 @@ export const toast = {
 
 // ══════════════════════════════════════════════════════════════════
 // DIALOGS (SweetAlert2) — tema dark integrado
+//
+// SweetAlert2 y su CSS pesan mas que ningun otro paquete del proyecto y
+// solo hacen falta cuando aparece un dialogo: confirmar un borrado o
+// pedir login. Cargarlos de forma estatica obligaba a descargarlos en
+// la primera visita aunque el usuario no llegara a ver ninguno.
+//
+// Se importan bajo demanda la primera vez que se abre un dialogo. La
+// promesa se guarda, asi que a partir del segundo es instantaneo. Todas
+// las funciones que los usan ya eran asincronas, de modo que la firma
+// publica de este modulo no cambia.
 // ══════════════════════════════════════════════════════════════════
 
-const SwalDark = Swal.mixin({
-  background: COLORS.card,
-  color: COLORS.text,
-  confirmButtonColor: COLORS.primary,
-  cancelButtonColor: COLORS.border,
-  buttonsStyling: true,
-  customClass: {
-    popup: "sg-swal-popup",
-    title: "sg-swal-title",
-    htmlContainer: "sg-swal-content",
-    confirmButton: "sg-swal-confirm",
-    cancelButton: "sg-swal-cancel",
-    denyButton: "sg-swal-deny",
-    actions: "sg-swal-actions",
-    icon: "sg-swal-icon",
-  },
-});
+type SwalMixin = Awaited<ReturnType<typeof buildSwal>>;
+
+async function buildSwal() {
+  const [{ default: Swal }] = await Promise.all([
+    import("sweetalert2"),
+    import("sweetalert2/dist/sweetalert2.min.css"),
+  ]);
+
+  return Swal.mixin({
+    background: COLORS.card,
+    color: COLORS.text,
+    confirmButtonColor: COLORS.primary,
+    cancelButtonColor: COLORS.border,
+    buttonsStyling: true,
+    customClass: {
+      popup: "sg-swal-popup",
+      title: "sg-swal-title",
+      htmlContainer: "sg-swal-content",
+      confirmButton: "sg-swal-confirm",
+      cancelButton: "sg-swal-cancel",
+      denyButton: "sg-swal-deny",
+      actions: "sg-swal-actions",
+      icon: "sg-swal-icon",
+    },
+  });
+}
+
+let swalPromise: Promise<SwalMixin> | null = null;
+
+function getSwal(): Promise<SwalMixin> {
+  swalPromise ??= buildSwal();
+  return swalPromise;
+}
 
 export interface AlertOptions {
   title?: string;
@@ -103,15 +128,16 @@ export interface AlertOptions {
   timer?: number;
 }
 
+async function fireAlert(icon: SweetAlertIcon, opts: AlertOptions) {
+  const Swal = await getSwal();
+  return Swal.fire({ icon, ...opts });
+}
+
 export const alert = {
-  info: (opts: AlertOptions) =>
-    SwalDark.fire({ icon: "info", ...opts }),
-  success: (opts: AlertOptions) =>
-    SwalDark.fire({ icon: "success", ...opts }),
-  error: (opts: AlertOptions) =>
-    SwalDark.fire({ icon: "error", ...opts }),
-  warning: (opts: AlertOptions) =>
-    SwalDark.fire({ icon: "warning", ...opts }),
+  info: (opts: AlertOptions) => fireAlert("info", opts),
+  success: (opts: AlertOptions) => fireAlert("success", opts),
+  error: (opts: AlertOptions) => fireAlert("error", opts),
+  warning: (opts: AlertOptions) => fireAlert("warning", opts),
 };
 
 export interface ConfirmOptions {
@@ -124,6 +150,7 @@ export interface ConfirmOptions {
 }
 
 export async function confirm(opts: ConfirmOptions = {}): Promise<boolean> {
+  const SwalDark = await getSwal();
   const result = await SwalDark.fire({
     title: opts.title ?? "¿Estás seguro?",
     text: opts.text,
@@ -143,6 +170,7 @@ export async function requireLoginPrompt(
   action: string,
   onLogin?: () => void | Promise<void>
 ): Promise<void> {
+  const SwalDark = await getSwal();
   const result = await SwalDark.fire({
     icon: "info",
     title: "Sesión requerida",
