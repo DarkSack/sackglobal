@@ -1,7 +1,8 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Newspaper, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { createNews, listNews } from "@/api/news";
+import { cacheKeys, useCachedResource } from "@/lib/cache";
 import { formatDateTime } from "@/lib/utils";
 import { toast } from "@/lib/notify";
 import { findProfanity } from "@/lib/profanity";
@@ -13,27 +14,17 @@ export default function News() {
   const { user, isLogged } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
 
-  const [items, setItems] = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  // Cacheado: volver a esta seccion no vuelve a pedir las noticias.
+  const {
+    data: items,
+    loading,
+    refresh: load,
+  } = useCachedResource<NewsItem[]>(cacheKeys.news, listNews, { fallback: [] });
+
   const [title, setTitle] = useState<string>("");
   const [notice, setNotice] = useState<string>("");
   const [imageUrl, setImageUrl] = useState<string>("");
   const [posting, setPosting] = useState<boolean>(false);
-
-  const load = async (): Promise<void> => {
-    setLoading(true);
-    try {
-      setItems(await listNews());
-    } catch (e) {
-      console.warn((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void load();
-  }, []);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();

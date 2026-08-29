@@ -1,7 +1,8 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Share2, ExternalLink, Trash2, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { createLink, deleteLink, listLinks } from "@/api/socialLinks";
+import { cacheKeys, useCachedResource } from "@/lib/cache";
 import { confirm, toast } from "@/lib/notify";
 import type { SocialLink } from "@/types";
 
@@ -11,28 +12,21 @@ export default function SocialLinks() {
   const { user } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
 
-  const [links, setLinks] = useState<SocialLink[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  // Cacheado: los enlaces cambian poco y se consultan desde dos sitios
+  // (esta pagina y la pestana "Redes" del portafolio).
+  const {
+    data: links,
+    loading,
+    refresh: load,
+  } = useCachedResource<SocialLink[]>(cacheKeys.socialLinks, listLinks, {
+    fallback: [],
+  });
+
   const [name, setName] = useState<string>("");
   const [url, setUrl] = useState<string>("");
   const [channel, setChannel] = useState<string>("");
   const [iconify, setIconify] = useState<string>("");
   const [posting, setPosting] = useState<boolean>(false);
-
-  const load = async (): Promise<void> => {
-    setLoading(true);
-    try {
-      setLinks(await listLinks());
-    } catch (e) {
-      console.warn((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void load();
-  }, []);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();

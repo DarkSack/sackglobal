@@ -15,6 +15,7 @@ import {
   deleteComment as deletePostComment,
   listComments,
 } from "@/api/postComments";
+import { cacheKeys, useCachedResource } from "@/lib/cache";
 import { formatDateTime } from "@/lib/utils";
 import { confirm, toast } from "@/lib/notify";
 import { findProfanity } from "@/lib/profanity";
@@ -38,8 +39,13 @@ export default function Posts() {
   const { user, isLogged } = useAuth();
   const isAdmin = user?.email === ADMIN_EMAIL;
 
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  // Cacheado: entrar y salir de esta seccion ya no repite la consulta.
+  const {
+    data: posts,
+    loading,
+    refresh: load,
+  } = useCachedResource<Post[]>(cacheKeys.posts, listPosts, { fallback: [] });
+
   const [content, setContent] = useState<string>("");
   const [imageUrl, setImageUrl] = useState<string>("");
   const [posting, setPosting] = useState<boolean>(false);
@@ -54,21 +60,6 @@ export default function Posts() {
     }
     setCommentCounts(await countCommentsPerPost(postIds));
   };
-
-  const load = async (): Promise<void> => {
-    setLoading(true);
-    try {
-      setPosts(await listPosts());
-    } catch (e) {
-      console.warn((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void load();
-  }, []);
 
   useEffect(() => {
     void refreshCounts();

@@ -5,6 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { clearCache } from "@/lib/cache";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
@@ -68,7 +69,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       options: { redirectTo: window.location.origin + "/" },
     });
 
-  const signOut = () => supabase.auth.signOut();
+  const signOut = async () => {
+    // Se vacia la cache al salir: parte de lo cacheado depende de quien
+    // esta identificado (por ejemplo las reacciones propias), y dejarlo
+    // ahi haria que el siguiente usuario viera restos del anterior.
+    clearCache();
+    return supabase.auth.signOut();
+  };
 
   return (
     <AuthContext.Provider
