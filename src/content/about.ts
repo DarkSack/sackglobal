@@ -67,7 +67,7 @@ export const about = {
       company: "Teleperformance · cuenta Comcast",
       period: "Jun 2026 — Actualidad",
       bullets: [
-        "Lidero un equipo de 16 agentes de soporte técnico bilingüe para clientes en EE. UU.",
+        "Lidero un equipo de 15 agentes de soporte técnico bilingüe para clientes en EE. UU.",
         "Subí el NPS mensual del 12 % al 47 % con coaching individual y revisión de llamadas",
       ],
     },
