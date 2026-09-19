@@ -1,0 +1,434 @@
+@import "tailwindcss";
+
+/* ══════════════════════════════════════════════════════════════════
+   Sistema de diseño — "digital engineering notebook"
+
+   Tres voces tipográficas:
+     display  Archivo, eje de anchura: condensada para titulares,
+              expandida para el nombre. La tipografía ES el visual.
+     body     Geist, para leer.
+     mono     Geist Mono, para todo lo que es dato: fechas, ids,
+              estados, evidencia. Si está en mono, viene de una fuente.
+
+   Un solo acento (rubí moderado) para enlaces, hover, selección y
+   metadata importante. Los proyectos pueden tener el suyo, pero solo
+   dentro de su propia composición.
+   ══════════════════════════════════════════════════════════════════ */
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  --bg: #080a0d;
+  --bg-raised: #0d1015;
+  --bg-sunken: #05070a;
+  --fg: #f2f3f5;
+  --fg-muted: #8b929d;
+  --fg-faint: #555c67;
+  --line: rgb(242 243 245 / 0.09);
+  --line-strong: rgb(242 243 245 / 0.2);
+  --accent: #e0506a;
+  --accent-ink: #ff8196;
+  --accent-soft: rgb(224 80 106 / 0.12);
+  --grid-line: rgb(242 243 245 / 0.035);
+
+  --acc-ruby: #e0506a;
+  --acc-cobalt: #6a88ff;
+  --acc-amber: #e6a93f;
+  --acc-sage: #86b995;
+  --acc-violet: #a48bf2;
+  --acc-neutral: #8b929d;
+
+  color-scheme: dark;
+}
+
+/* Claro: papel cálido, no blanco de oficina. */
+:root[data-theme="light"] {
+  --bg: #f3f2ee;
+  --bg-raised: #fbfaf7;
+  --bg-sunken: #e9e7e1;
+  --fg: #0b0d10;
+  --fg-muted: #555b64;
+  --fg-faint: #8e939a;
+  --line: rgb(11 13 16 / 0.1);
+  --line-strong: rgb(11 13 16 / 0.24);
+  --accent: #b52a42;
+  --accent-ink: #9c1f35;
+  --accent-soft: rgb(181 42 66 / 0.09);
+  --grid-line: rgb(11 13 16 / 0.04);
+
+  --acc-ruby: #b52a42;
+  --acc-cobalt: #3050d8;
+  --acc-amber: #a86b00;
+  --acc-sage: #3f7a52;
+  --acc-violet: #6a4bd0;
+  --acc-neutral: #555b64;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --bg: #f3f2ee;
+    --bg-raised: #fbfaf7;
+    --bg-sunken: #e9e7e1;
+    --fg: #0b0d10;
+    --fg-muted: #555b64;
+    --fg-faint: #8e939a;
+    --line: rgb(11 13 16 / 0.1);
+    --line-strong: rgb(11 13 16 / 0.24);
+    --accent: #b52a42;
+    --accent-ink: #9c1f35;
+    --accent-soft: rgb(181 42 66 / 0.09);
+    --grid-line: rgb(11 13 16 / 0.04);
+    --acc-ruby: #b52a42;
+    --acc-cobalt: #3050d8;
+    --acc-amber: #a86b00;
+    --acc-sage: #3f7a52;
+    --acc-violet: #6a4bd0;
+    --acc-neutral: #555b64;
+    color-scheme: light;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-raised: var(--bg-raised);
+  --color-sunken: var(--bg-sunken);
+  --color-fg: var(--fg);
+  --color-muted: var(--fg-muted);
+  --color-faint: var(--fg-faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+
+  --font-display: var(--font-archivo), "Arial Narrow", system-ui, sans-serif;
+  --font-sans: var(--font-geist), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-serif: var(--font-instrument), Georgia, serif;
+
+  --breakpoint-xs: 25rem;
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--fg);
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    scroll-padding-top: 5rem;
+  }
+  body {
+    min-height: 100dvh;
+    background: var(--bg);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  ::selection {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  a {
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 1px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@layer components {
+  /* Contenedor con márgenes de 16 px en móvil. */
+  .frame {
+    width: 100%;
+    max-width: 90rem;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 48rem) {
+    .frame {
+      padding-inline: 2rem;
+    }
+  }
+  @media (min-width: 80rem) {
+    .frame {
+      padding-inline: 3rem;
+    }
+  }
+
+  /* Titulares: condensados, apretados, en caja alta. */
+  .display {
+    font-family: var(--font-display);
+    font-stretch: 72%;
+    font-weight: 800;
+    line-height: 0.86;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+  .display-wide {
+    font-family: var(--font-display);
+    font-stretch: 125%;
+    font-weight: 900;
+    line-height: 0.82;
+    letter-spacing: -0.045em;
+    text-transform: uppercase;
+  }
+
+  /* Etiqueta de metadata: todo lo que es dato va así. */
+  .meta {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    line-height: 1.4;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+
+  .hairline {
+    border-color: var(--line);
+  }
+
+  /* Enlace editorial: subrayado que crece desde la izquierda. */
+  .link {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), color 0.2s;
+  }
+  .link:hover,
+  .link:focus-visible {
+    background-size: 100% 1px;
+    color: var(--accent-ink);
+  }
+
+  /* Retícula técnica de fondo, muy tenue. */
+  .blueprint {
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 2rem 2rem;
+  }
+
+  /* Botón de texto con corchetes: [ EXPLORE WORK ] */
+  .bracket {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.85em 1.1em;
+    border: 1px solid var(--line-strong);
+    transition: border-color 0.2s, color 0.2s, background-color 0.2s;
+  }
+  .bracket:hover,
+  .bracket:focus-visible {
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+  }
+  .bracket-solid {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
+  }
+  .bracket-solid:hover,
+  .bracket-solid:focus-visible {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+  }
+
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -4rem;
+    z-index: 100;
+    padding: 0.75rem 1rem;
+    background: var(--fg);
+    color: var(--bg);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+  }
+  .skip-link:focus {
+    top: 1rem;
+  }
+}
+
+/* ── Prosa: README y artículos del Journal ─────────────────────── */
+.prose-archive {
+  color: var(--fg);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  max-width: 68ch;
+}
+.prose-archive > * + * {
+  margin-top: 1.1em;
+}
+.prose-archive h1,
+.prose-archive h2,
+.prose-archive h3,
+.prose-archive h4 {
+  font-family: var(--font-display);
+  font-stretch: 85%;
+  font-weight: 750;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  margin-top: 2.2em;
+}
+.prose-archive h1 {
+  font-size: 2rem;
+}
+.prose-archive h2 {
+  font-size: 1.6rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--line);
+}
+.prose-archive h3 {
+  font-size: 1.25rem;
+}
+.prose-archive h4 {
+  font-size: 1.05rem;
+}
+.prose-archive a {
+  color: var(--accent-ink);
+  text-decoration: underline;
+}
+.prose-archive strong {
+  font-weight: 650;
+}
+.prose-archive ul,
+.prose-archive ol {
+  padding-left: 1.25rem;
+}
+.prose-archive ul {
+  list-style: square;
+}
+.prose-archive ol {
+  list-style: decimal;
+}
+.prose-archive li + li {
+  margin-top: 0.35em;
+}
+.prose-archive li::marker {
+  color: var(--fg-faint);
+}
+.prose-archive blockquote {
+  border-left: 2px solid var(--accent);
+  padding-left: 1rem;
+  color: var(--fg-muted);
+}
+.prose-archive code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  padding: 0.08em 0.35em;
+}
+.prose-archive pre {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+}
+.prose-archive pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: inherit;
+}
+.prose-archive table {
+  display: block;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  border-collapse: collapse;
+  max-width: 100%;
+}
+.prose-archive th,
+.prose-archive td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  text-align: left;
+  vertical-align: top;
+}
+.prose-archive th {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  font-weight: 500;
+}
+.prose-archive img {
+  max-width: 100%;
+  height: auto;
+}
+.prose-archive hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+/* ── Movimiento ─────────────────────────────────────────────────── */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.6em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+.caret::after {
+  content: "▍";
+  margin-left: 0.15em;
+  color: var(--accent);
+  animation: blink 1.1s steps(1) infinite;
+}
+
+/* ── Formularios (solo /admin) ──────────────────────────────────── */
+.input {
+  width: 100%;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  padding: 0.6rem 0.75rem;
+  outline: none;
+}
+.input:focus {
+  border-color: var(--accent);
+}

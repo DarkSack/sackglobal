@@ -22,3 +22,8 @@ Thumbs.db
 .vscode/*
 !.vscode/settings.json
 .idea
+
+# Next.js
+.next
+out
+next-env.d.ts
