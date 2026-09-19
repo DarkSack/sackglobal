@@ -1,133 +1,104 @@
-# SackGlobal
+# SackGlobal — digital archive
 
-Mi **hub personal** en la web. Dos cosas en una:
+Sitio personal de **Sack** (Johan Jafet Del Valle Santiago): portfolio, perfil, journal y redes en un solo archivo digital.
 
-1. **Portfolio público** que lista todos mis repos de GitHub, con **reacciones y comentarios** para cualquiera que inicie sesión con su cuenta de GitHub.
-2. **Zona social** donde publico posts, noticias del canal y mis redes sociales — todo respaldado por Supabase.
-
-Antes esto vivía como dos proyectos separados (`Portfolio` en Astro y `blogdelsack` en CRA). Ahora es un solo sitio.
+La regla del proyecto: **el contenido real es el protagonista y no se inventa nada.** Los proyectos, tecnologías, fechas y actividad salen de GitHub; lo editorial se escribe a mano en `src/content/`; el Journal lo publica el autor desde `/admin`.
 
 ---
 
-## Qué hace
+## Rutas
 
-### `/` — Portfolio
-
-- Trae en vivo todos los repos públicos de `github.com/DarkSack` desde la API de GitHub.
-- Cards con nombre, descripción, lenguaje (con color estilo GitHub), stars, forks, issues abiertas y fecha de último push.
-- Buscador + filtro por lenguaje.
-- **5 reacciones** por repo (❤️ 👍 🚀 🔥 👀). Toggle al clickar. Aparece resaltada si ya la diste.
-- Click en la tarjeta abre un **modal** con la descripción completa + hilo de comentarios (leer para todos, escribir con sesión).
-
-### `/social` — Hub social
-
-- Landing con 3 tarjetas hacia:
-  - **`/social/posts`** — timeline de posts (cualquier usuario logueado puede publicar los suyos).
-  - **`/social/noticias`** — noticias globales del canal (solo el admin publica).
-  - **`/social/redes-sociales`** — links a mis perfiles (Twitch, X, LinkedIn, etc.), con iconos de Iconify.
-
-### `/profile`
-
-- Perfil del usuario: avatar de GitHub, nombre, `@handle`, email y logout.
+| Ruta | Qué es |
+| --- | --- |
+| `/` | Portada: hero, Selected Work, About, Currently Building, Technology Universe, Journal, Connect |
+| `/work` | Archivo completo con filtros (`?category=`, `?tech=`) y orden (`?sort=updated\|stars\|created`) |
+| `/projects/[slug]` | Ficha de proyecto: README, features, stack con evidencia, estructura, actividad, commits |
+| `/about` | Perfil, experiencia, Technology Map |
+| `/journal`, `/journal/[slug]` | Field notes (`?type=`, `?tag=`) · RSS en `/journal/rss.xml` |
+| `/now` | Lo que se está construyendo; "using lately" calculado de los repos |
+| `/uses` | Herramientas, cada una con su fuente |
+| `/connect` | Redes |
+| `/admin` | CMS del Journal (login con GitHub, solo el email admin) |
 
 ---
 
-## Autenticación
+## Tres fuentes, sin mezclarlas
 
-**GitHub OAuth** vía Supabase Auth. La primera vez que un usuario inicia sesión:
+```
+GitHub API ──► lib/github (fetch + caché 1 h + snapshot) ──► lib/projects (normaliza, detecta, clasifica) ──► UI
+Supabase   ──► lib/journal (RLS: solo publicados, caché 5 min)                                        ──► UI
+src/content (a mano: perfil, redes, now, uses, metadata editorial de proyectos)                        ──► UI
+```
 
-1. Supabase lo redirige a GitHub → autoriza → vuelve.
-2. `AuthContext` hace `upsert` en `public.users` con `user_id`, `nickname` (usa `user_name` de GitHub), `email`, `name`, `avatar_url`.
-3. Sus reacciones y comentarios quedan ligados a su `user_id`.
+| Fuente | Tipo | Dónde se edita |
+| --- | --- | --- |
+| GitHub | **FACT** — repos, lenguajes, topics, README, manifiestos, commits, actividad | Nada: se lee solo |
+| `src/content/*` | **METADATA / EDITORIAL** — destacados, textos, estado cuando la heurística no alcanza | Los ficheros `.ts` |
+| Supabase `journal_posts` | **USER GENERATED** — posts | `/admin` |
 
-Rol admin: hardcodeado por email en `Posts`, `News`, `SocialLinks` (`johanjafet4@gmail.com`).
+### GitHub como fuente de verdad
+
+- `src/lib/github/fetch-archive.ts` lee, por repo: detalle, lenguajes, árbol, releases, commits, actividad semanal y, desde `raw.githubusercontent.com` (no gasta cuota), README, CHANGELOG y manifiestos (`package.json`, Gradle, `.csproj`, `app.json`, `manifest.json`, `requirements.txt`, Docker, `pom.xml`).
+- El token (`GITHUB_TOKEN`) vive solo en el servidor (`server-only`).
+- **Sin token, o si la API falla**, el sitio sirve `src/data/github-snapshot.json`. Regenerarlo:
+
+  ```bash
+  npm run sync:github   # usa GITHUB_TOKEN o `gh auth token`
+  ```
+
+### Project intelligence
+
+- **Tecnologías** (`lib/projects/technologies.ts`): catálogo con reglas por dependencia, topic, lenguaje (≥ 8 %) o manifiesto. Cada detección guarda su evidencia (`mobile/package.json → expo`), visible al pasar el ratón.
+- **Categorías** (`lib/projects/classify.ts`): web, mobile, minecraft, backend, ai, devtools, systems, infrastructure, experimental — solo con evidencia.
+- **Estado**: `ARCHIVED` si GitHub lo dice, `ACTIVE` si hubo push en 45 días, `UNKNOWN` en otro caso. `WIP`, `MAINTAINED`, `EXPERIMENTAL`… solo por metadata. La UI siempre dice de dónde sale el estado.
+- **README** (`lib/projects/readme.ts`): resumen, features, arquitectura, estado y changelog por encabezado; lo que no existe no se muestra.
+
+### Metadata editorial — `src/content/projects.ts`
+
+```ts
+RPGRollSack: {
+  slug: "rpgroll", title: "RPGRoll", featured: true, displayOrder: 1,
+  size: "xl",            // peso en el bento: xl | lg | md | sm
+  status: "ACTIVE", statusNote: "…", accent: "ruby",
+  featuredImage: "/projects/rpgroll.png",   // opcional; sin ella, composición tipográfica
+  excludeTech: [], links: { download: "…" }, related: ["RPGRollDocs"],
+}
+```
 
 ---
 
-## Setup local
+## Journal / CMS
+
+1. Aplicar `supabase/migrations/20260919_journal_posts.sql` en el SQL Editor de Supabase (crea `journal_posts` con RLS; `posts` y `news` antiguas no se tocan).
+2. Entrar en `/admin` con GitHub (mismo provider OAuth de siempre) usando la cuenta admin.
+3. Crear, previsualizar (Markdown), publicar, pasar a borrador o archivar. Al guardar, `/api/revalidate` refresca la web pública.
+
+Tipos: Project update, Devlog, Announcement, Tutorial, Release, Note, News, Stream, Community.
+
+---
+
+## Desarrollo
 
 ```bash
-git clone https://github.com/DarkSack/sackglobal.git
-cd sackglobal
 npm install
-cp .env.example .env      # rellena URL + anon key
-npm run dev               # http://localhost:5173
+cp .env.example .env.local
+npm run dev          # http://localhost:3000
+npm run build
+npm run lint
+npm run typecheck
 ```
 
-### Variables de entorno
+Variables: ver `.env.example`. Los nombres `VITE_SUPABASE_*` del despliegue anterior se siguen aceptando.
 
-```env
-VITE_SUPABASE_URL=https://xxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=sb_publishable_xxxxx
-```
+### Añadir una red, una tecnología o un texto
 
-### Supabase
-
-Aplica la migración `supabase/migrations/20260823_sackglobal_init.sql` en el SQL Editor de tu proyecto Supabase. Crea/renombra las tablas:
-
-- `users` (espejo de `auth.users`, con `nickname`, `avatar_url`, `email`)
-- `posts` (feed público, escritura por owner)
-- `news` (solo admin publica)
-- `social_links` (solo admin edita)
-- `repo_interactions` (reacciones + comentarios sobre repos, lectura pública, escritura autenticada)
-
-Todas con RLS y policies por dueño / rol.
-
-**Habilita el provider GitHub** en Supabase → Authentication → Providers, con un OAuth App de GitHub cuyo callback apunte a `https://<tu-proyecto>.supabase.co/auth/v1/callback`.
+- Red → `src/content/social.ts`
+- Tecnología que no se detecta → entrada en `TECH_CATALOG` (`src/lib/projects/technologies.ts`)
+- /now, /uses → `src/content/now.ts`, `src/content/uses.ts` (las entradas `pending: true` solo se ven en desarrollo)
 
 ---
 
 ## Stack
 
-- **React 18** + **Vite 5**
-- **TailwindCSS 3** con paleta dark GitHub-style + `tailwindcss-animate`
-- **shadcn/ui**-flavor (Radix Dialog, Slot; utilidades `cn` y `class-variance-authority`)
-- **Iconos:** `lucide-react` + Iconify (para redes sociales)
-- **Backend:** Supabase (PostgreSQL + Auth + Realtime)
-- **Router:** `react-router-dom` v6
-
----
-
-## Estructura
-
-```
-sackglobal/
-├── src/
-│   ├── main.jsx
-│   ├── App.jsx
-│   ├── index.css
-│   ├── lib/
-│   │   ├── supabase.js
-│   │   └── utils.js         # cn, formatDate, formatDateTime
-│   ├── context/
-│   │   └── AuthContext.jsx  # login GitHub + upsert users
-│   ├── routes/
-│   │   └── Router.jsx
-│   ├── api/
-│   │   ├── github.js        # fetch repos (GitHub API)
-│   │   ├── repoInteractions.js
-│   │   ├── posts.js
-│   │   ├── news.js
-│   │   └── socialLinks.js
-│   ├── components/
-│   │   └── TopBar.jsx
-│   └── pages/
-│       ├── Portfolio.jsx
-│       ├── RepoDetailModal.jsx
-│       ├── SocialHome.jsx
-│       ├── Posts.jsx
-│       ├── News.jsx
-│       ├── SocialLinks.jsx
-│       └── Profile.jsx
-├── supabase/
-│   └── migrations/20260823_sackglobal_init.sql
-├── public/favicon.svg
-├── tailwind.config.js
-├── vite.config.js
-├── package.json
-└── .env.example
-```
-
----
-
-Hecho con 💻 y ☕ por **Sack**.
+Next.js 16 (App Router, SSG + ISR) · React 19 · TypeScript estricto · Tailwind CSS v4 · Supabase · react-markdown · next/og.
+Tipografía: Archivo (display, eje de anchura) · Geist · Geist Mono · Instrument Serif.
