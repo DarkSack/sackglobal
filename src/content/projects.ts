@@ -54,7 +54,7 @@ export const projectMeta: Record<string, ProjectMeta> = {
     statusNote: "Core + 23 addons en 1.0.0; lanzamiento previsto en sep 2026",
     accent: "ruby",
     extraCategories: ["devtools"],
-    links: { download: "https://store.sackito.online" },
+    links: { download: "https://shop.sackito.online" },
     related: ["RPGRollDocs"],
   },
   "pc-remote": {
